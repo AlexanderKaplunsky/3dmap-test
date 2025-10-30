@@ -1,7 +1,7 @@
-import React, {useEffect, useRef, useState} from 'react';
-import logo from './logo.svg';
+import React, {useState} from 'react';
 import styles from './index.module.scss';
 import './App.css';
+import Map from './Map';
 
 declare global {
   interface Window {
@@ -28,7 +28,7 @@ export function ensureGoogleMapsLoaded(): Promise<void> {
       return;
     }
 
-    const apiKey = ''
+    const apiKey = 'AIzaSyDsoZfoY75xr-6bUPgVNrsgFsJ59u0Yohw'
     if (!apiKey) {
       console.error('REACT_APP_GOOGLE_API_KEY is not set; Google Maps cannot initialize.');
     }
@@ -51,122 +51,23 @@ export function ensureGoogleMapsLoaded(): Promise<void> {
 }
 
 function App() {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const polylineRef = useRef<HTMLDivElement>(null);
-  const mapRef = useRef<any>(null);
-  const [ready, setReady] = useState(false);
-  const [mapLoading, setMapLoading] = useState(true);
+  const [isVisibleMap, setIsVisibleMap] = useState(true);
 
-  const createMapElement = (centerCoord: any): HTMLElement => {
-    const mapEl = document.createElement('gmp-map-3d') as any;
-    mapEl.mode = 'HYBRID';
-    mapEl.range = 2500;
-    mapEl.tilt = 45;
-    mapEl.heading = 25;
-    mapEl.center = {
-      lat: centerCoord.lat,
-      lng: centerCoord.lon,
-      altitude: centerCoord.ele,
-    };
 
-    return mapEl;
-  };
 
-  const waitFor3DMapLoaded = (mapEl: HTMLElement): Promise<void> =>
-      new Promise((resolve) => {
-        let done = false;
-        const finish = () => {
-          if (!done) {
-            done = true;
-            resolve();
-          }
-        };
-
-        ['gmp-ready', 'gmp-viewready', 'gmp-stable', 'load'].forEach((ev) => {
-          mapEl.addEventListener?.(ev, finish, { once: true });
-        });
-
-        const tick = () => {
-          const canvas = (mapEl as any).shadowRoot?.querySelector?.('canvas');
-          if (canvas && canvas.width > 0 && canvas.height > 0) {
-            requestAnimationFrame(finish);
-          } else {
-            requestAnimationFrame(tick);
-          }
-        };
-        requestAnimationFrame(tick);
-
-        setTimeout(finish, 5000);
-      });
-
-  const initMap = async () => {
-
-    const parent = containerRef.current;
-      const mapEl = createMapElement({
-        ele
-            :
-            34.64,
-        lat
-            :
-            40.60177,
-        lon
-            :
-            -74.06111,
-      });
-      mapRef.current = mapEl;
-      parent?.appendChild(mapEl);
-
-      waitFor3DMapLoaded(mapEl).then(() => setMapLoading(false));
-
-      // mapEl.appendChild(polylineEl);
-      // const path = getMappedPath(gpx.tracks[0]);
-      // customElements.whenDefined('gmp-polyline-3d').then(() => {
-      //   (polylineEl as any).coordinates = path;
-      // });
-
-      setMapLoading(false);
-
-  };
-
-  useEffect(() => {
-    let cancelled = false;
-    ensureGoogleMapsLoaded()
-        .then(() => customElements.whenDefined('gmp-map-3d'))
-        .then(() => {
-          if (!cancelled) setReady(true);
-        })
-        .catch(console.error);
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  useEffect(() => {
-    if (!ready || !containerRef.current) return;
-    setMapLoading(true);
-    initMap();
-  }, [ready]);
+  const refreshMap = () => {
+    setIsVisibleMap(false)
+    setTimeout(() => {
+      setIsVisibleMap(true)
+    }, 1000)
+  }
 
 
 
 return (
       <div className={styles.mapContainer}>
-        <div className={styles.mapWrapper}>
-          <div className={styles.map} ref={containerRef}>
-            <div ref={polylineRef}></div>
-          </div>
-
-          {mapLoading && (
-              <div
-                  className={styles.spinnerOverlay}
-                  aria-busy="true"
-                  aria-live="polite"
-              >
-                <div className={styles.spinner} />
-              </div>
-          )}
-
-        </div>
+        <button onClick={refreshMap}>Toggle</button>
+        {isVisibleMap && <Map />}
       </div>
   );
 }
